@@ -13,6 +13,7 @@ This script constructs real-time winter-run redd dewatering estimates based on d
 reddCount <- 1055 
 countDate <- "September 8, 2022"
 updatedReddInfoDate <- "September 12, 2022"
+conservationFish <- 79
 #show_extra = TRUE
 ```
 
@@ -20,29 +21,6 @@ This script constructs real-time winter-run redd dewatering estimates based on m
 
 
 Please note that all data are preliminary until data collection is finalized. Likewise, there are uncertainties with forecasts which may lead to changes in proposed operations. 
-
-
-
-```{r, echo=FALSE}
-#Files needed for this script include:
-
-#* Shallow redd dewatering estimates from CDFW Upper Sacramento River Basin Salmonid Monitoring (calfish.org),
-#* Dates and KES flows for proposed alternative flow regimes,
-#* Real time KES flow data to date available from [SacPAS](https://www.cbr.washington.edu/sacramento/tmp/riverinventoryyears_1662742689_602.html) or [USBR](https://www.usbr.gov/mp/cvo/vungvari/sactemprpt.pdf)
-  
-
-#To run this script:
-
-# * Step 1: Save each Excel spreadsheet as a .csv file in the working directory (currently I:/Lisa/Redd Dewatering/Real-time Estimates), with dates [//]: in %m/%d/%Y format:,
-#   + Redds.csv (3 columns: Estimated.Date.of.Emergence, Status, & ACTUAL.or.ESTIMATED..DEWATER.FLOW) #note that column names may need to be edited
-#   + kesFlow.csv (no. columns = 1 + no. alternatives:  Date,  AltN...n)
-#   + realFlow.csv (2 columns: Date & KES_Flow),
-
-# * Step 2: Add the most recent redd count and date of count, and date of latest emergence/dewatering data to line first chunk of r code (above). Count and date are found on the Reports sheet of YYYY_WR_INTERNET_CARCASS-REDDS_counts_as_of_m-dd-yy.xlsx file on [calfish.org](https://gcc02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fwww.calfish.org%2FProgramsData%2FConservationandManagement%2FCentralValleyMonitoring%2FCDFWUpperSacRiverBasinSalmonidMonitoring.aspx&data=05%7C01%7Clelliott%40usbr.gov%7C689ebb9a6c8243b4f96c08da90f5c542%7C0693b5ba4b184d7b9341f32f400a5494%7C0%7C0%7C637981682646098788%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C3000%7C%7C%7C&sdata=A1eQkWPxbkXxnzEvc2K8%2FTmslZ8H8zvxdks3%2F78Yrvw%3D&reserved=0),
-
-#* Step 3: Knit script: When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
-
-```
 
 
 ```{r setup, echo=FALSE}
@@ -65,49 +43,33 @@ reddsAll <- redds
 
 #Read in KES flow data, converting flow to a numeric and date from character to date value
 kesFlow <- read.csv("kesFlow.csv")
-kesFlow <- read.csv("kesFlow.csv", colClasses=c('character', rep('num.with.commas', length(kesFlow)-1)))
+kesFlow <- read.csv("kesFlow.csv", colClasses=c('character', rep('num.with.commas', length(kesFlow) - 1)))
 kesFlow$Date <- as.Date(kesFlow$Date, "%m/%d/%Y")
+nAlt <- length(kesFlow) - 1
 
 realFlow <- read.csv("realtimeKES.csv")
 realFlow$Date <- as.Date(realFlow$Date, "%m/%d/%Y")
 actualDate <- max(realFlow$Date)
 
-#`r if(show_extra){
-#print("this will only print when show.text is TRUE")
-#str(redds)
-#str(kesFlow)
-#str(realFlow)}`
-
 ```
 
 ```{r, echo = FALSE}
 # Thousand Acre Feet
-kesFlowReal <- merge(kesFlow, realFlow, by = "Date", all.x = TRUE, all.y = TRUE)
-for(a in 1:(length(kesFlow)-1)){
- kesFlowReal[ ,  paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")] <- NA
- kesFlowReal[ ,  paste0("A", substr(names(kesFlow)[a + 1], 4,5), "taf")] <- NA
+
+for(a in 1:nAlt){
+ kesFlow[ ,  paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")] <- NA
+ kesFlow[ ,  paste0("A", substr(names(kesFlow)[a + 1], 4,5), "taf")] <- NA
 }
 
-for(a in 1:(length(kesFlow)-1)){
-  for(r in 1: nrow(kesFlowReal)){
-    if(is.na(kesFlowReal$KES_Flow[r])){
-      kesFlowReal[r, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")] <- kesFlowReal[r, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))]
-      kesFlowReal[r, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "taf")] <- (kesFlowReal[r, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))]*1.983)/1000
-    } else{
-      kesFlowReal[r, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")] <- kesFlowReal$KES_Flow[r]
-      kesFlowReal[r, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "taf")] <- (kesFlowReal$KES_Flow[r]*1.983)/1000
-    }
+for(a in 1:nAlt){
+  for(r in 1: nrow(kesFlow)){
+      kesFlow[r, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")] <- kesFlow[r, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))]
+      kesFlow[r, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "taf")] <- (kesFlow[r, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))]*1.983)/1000
   }
 }
 
-septTAF <- subset(kesFlowReal, months(kesFlowReal$Date) == "September")
-octTAF <- subset(kesFlowReal, months(kesFlowReal$Date) == "October")
-
-```
-
-```{r, echo = FALSE}
-# September Flow Average
-septKesFlow <- subset (kesFlow, kesFlow$Date < '2022-10-01' & kesFlow$Date >= '2022-9-01')
+septKesFlow <- subset(kesFlow, months(kesFlow$Date) == "September")
+octKesFlow <- subset(kesFlow, months(kesFlow$Date) == "October")
 
 ```
 
@@ -117,11 +79,11 @@ As of `r countDate`, the unexpanded redd count is **`r reddCount`** Winter-run r
 
 As of `r updatedReddInfoDate`, **`r nrow(subset(reddsAll, reddsAll$Status == "EMERGED")) `** Winter-run redds have **emerged** and **`r nrow(subset(reddsAll, reddsAll$Status == "DEWATERED"))`** have been **dewatered**. This leaves **`r nrow(subset(reddsAll, reddsAll$Status == "OK"))`** shallow water redds of concern.
 
-
+In addition, `r conservationFish` wild adult WRCS were removed to the hatchery as part of conservation actions.
 
 ```{r, echo = FALSE}
 # Estimated number of redds dewatered
-for(a in 1:(length(kesFlow)-1)){
+for(a in 1:(nAlt)){
  redds[ ,  paste0("dewateredAlt", substr(names(kesFlow)[a + 1], 4,5))] <- NA
 }
 
@@ -129,7 +91,7 @@ redds <- subset(redds, redds$Status == "OK" | redds$Status == "DEWATERED")
 
 for(r in 1:nrow(redds)){ #loop over redds
   for(f in 1:nrow(kesFlow)){ #loop over KES flow
-    for(a in 1:(length(kesFlow)-1)){ #loop over alternatives
+    for(a in 1:nAlt){ #loop over alternatives
       if(kesFlow$Date[f] == redds$Estimated.Date.of.Emergence[r]){ #if dates match
         if(kesFlow[f, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))] <= redds$ACTUAL.or.ESTIMATED..DEWATER.FLOW[r]){ #If KES flow is < or = redd dewatering flow, 1 (dewatered)
           redds[r, paste0("dewateredAlt", substr(names(kesFlow)[a + 1], 4,5))] <- 1
@@ -146,13 +108,13 @@ for(r in 1:nrow(redds)){ #loop over redds
 
 ```{r, echo = FALSE}
 # Estimated number of redds dewatered with a 100cfs buffer
-for(a in 1:(length(kesFlow)-1)){
+for(a in 1:nAlt){
  redds[ ,  paste0("dewateredAlt", substr(names(kesFlow)[a + 1], 4,5), "Buffer")] <- NA
 }
 
 for(r in 1:nrow(redds)){ #loop over redds
   for(f in 1:nrow(kesFlow)){ #loop over KES flow
-    for(a in 1:(length(kesFlow)-1)){ #loop over alternatives
+    for(a in 1:nAlt){ #loop over alternatives
       if(kesFlow$Date[f] == redds$Estimated.Date.of.Emergence[r]){ #if dates match
         if(kesFlow[f, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))] <= redds$ACTUAL.or.ESTIMATED..DEWATER.FLOW[r] + 100){ #If KES flow is < or = redd dewatering flow, 1 (dewatered)
           redds[r, paste0("dewateredAlt", substr(names(kesFlow)[a + 1], 4,5), "Buffer")] <- 1
@@ -169,19 +131,23 @@ for(r in 1:nrow(redds)){ #loop over redds
 
 
 # Table
-**Table 1.** Average September Keswick (KES) Flow, monthly flows for September and October in TAF, estimated numbers of SRWC redds dewatered, and percent of population that would be lost under each of the proposed alternatives. KES Flow data uses actual flow-to-date as of `r max(realFlow$Date)` and proposed flows for the remainder of the incubation period. Redd dewatering is considered at the actual or estimated dewatering flow and with a 100 cfs buffer applied to the actual/estimated dewatering flow. Percentage of the population lost is based on the `r countDate` count of `r reddCount` Winter-run redds and updated redd counts may be available soon.  
+**Table 1.** Average September Keswick (KES) Flow, monthly flows for September and October (in cfs), total Sept-Oct volume (in TAF), estimated numbers of SRWC redds dewatered, and percent of population that would be lost under each of the proposed alternatives. KES Flow data uses actual flow-to-date as of `r max(realFlow$Date)` and proposed flows for the remainder of the incubation period. Redd dewatering is considered at the actual or estimated dewatering flow and with a 100 cfs buffer applied to the actual/estimated dewatering flow. Percentage of the population lost is based on the `r countDate` count of `r reddCount` Winter-run redds and updated redd counts may be available soon.  
 ```{r, echo=FALSE, results= TRUE}
-Metric <- c("Avg Sept Flow (cfs)", "Redds dewatered", "Percent Lost", "Redds dewatered (w/ 100cfs buffer)", "Percent Lost (w/ 100cfs buffer)")
+Metric <- c("Avg Sept Flow (cfs)", "Avg Oct Flow (cfs)", "Total Sept-Oct Flow (TAF)", "Redds dewatered", "Percent Lost", "Redds dewatered (w/ 100cfs buffer)", "Percent Lost (w/ 100cfs buffer)")
 table <- data.frame(Metric)
 
-d <- rep(NA, length(kesFlow)-1)
-dflist = vector("list", length(kesFlow)-1) # creating an empty list
+d <- rep(NA, nAlt)
+dflist = vector("list", nAlt) # creating an empty list
+dfnames <- rep(NA, nAlt)
 
-for(a in 1:(length(kesFlow)-1)){
+for(a in 1:(nAlt)){
  d[a] = paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))
  dfnames[a] = paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))
  names(dflist) = dfnames # naming the list 
  dflist[[a]] <- as.character(c(round(mean(septKesFlow[, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))], na.rm = TRUE), 0),
+                               round(mean(octKesFlow[, paste0("Alt", substr(names(kesFlow)[a + 1], 4,5))], na.rm = TRUE), 0),
+                               round(sum(septKesFlow[, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "taf")], na.rm = TRUE) + 
+                                       sum(octKesFlow[, paste0("A", substr(names(kesFlow)[a + 1], 4,5), "taf")], na.rm = TRUE), 0),
           sum(redds[ ,paste0("dewateredAlt", substr(names(kesFlow)[a + 1], 4,5))], na.rm = TRUE), 
           round((sum(redds[ ,  paste0("dewateredAlt", substr(names(kesFlow)[a + 1], 4,5))], na.rm = TRUE)/reddCount*100), 1), 
           sum(redds[ ,  paste0("dewateredAlt", substr(names(kesFlow)[a + 1], 4,5), "Buffer")], na.rm = TRUE), 
@@ -215,7 +181,7 @@ for(r in 1:nrow(reddsTable)){
 }
 
 library(RColorBrewer)
-cols <- brewer.pal(length(kesFlow - 1),'Set2')
+cols <- brewer.pal(nAlt,'Set2')
 
 plot(reddsTable$Estimated.Date.of.Emergence, reddsTable$ACTUAL.or.ESTIMATED..DEWATER.FLOW, 
      pch = 16, col = reddsTable$cols,
@@ -233,16 +199,16 @@ grid(nx = NULL, ny = NULL,
      col = "gray", # Grid line color
      lwd = 1)      # Grid line width
 abline( v = actualDate, col = "grey", lty = 2, lwd = 1)
-lines(kesFlowReal$Date, kesFlowReal$KES_Flow, col = "black", lwd = 2)
+#lines(kesFlow$Date, kesFlow$KES_Flow, col = "black", lwd = 2)
 text(reddsTable$Estimated.Date.of.Emergence + 0.01, reddsTable$ACTUAL.or.ESTIMATED..DEWATER.FLOW + 10, labels = reddsTable$Count)
 
-for(a in 1:(length(kesFlow)-1)){
-  lines(kesFlowReal$Date , kesFlowReal[ ,  paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")], col = cols[a], lwd = 2)
+for(a in 1:(nAlt)){
+  lines(kesFlow$Date , kesFlow[ ,  paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")], col = cols[a], lwd = 2)
 }
 legend("bottom", inset = c(0, -0.3), legend=c(names(kesFlow)[2:length(kesFlow)], "Emerged", "Dewatered", "Remaining"),
-       pch = c( rep(NA, length(kesFlow) - 1), 16, 16, 16),
-       col=c(cols[1:(length(kesFlow)-1)], "light blue", "darkorange2",  "grey"), 
-       lty= c(rep(1, length(kesFlow) - 1), NA, NA, NA), cex=0.8, xpd = TRUE, horiz = TRUE)  
+       pch = c( rep(NA, nAlt), 16, 16, 16),
+       col=c(cols[1:(nAlt)], "light blue", "darkorange2",  "grey"), 
+       lty= c(rep(1, nAlt), NA, NA, NA), cex=0.8, xpd = TRUE, horiz = TRUE)  
 
 
 
