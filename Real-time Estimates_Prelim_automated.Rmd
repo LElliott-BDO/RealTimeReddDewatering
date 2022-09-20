@@ -3,8 +3,8 @@ title: "PRELIMINARY DATA: Real-time SRWC Redd Dewatering Estimates"
 author: "BDO Science Division"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  html_document: default
   word_document: default
+  html_document: default
   pdf_document: default
 ---
 This script constructs real-time winter-run redd dewatering estimates based on data from 
@@ -29,8 +29,6 @@ library(data.table)
 library(plyr)
 library(lubridate)
 
-setwd("I:/Lisa/Redd Dewatering/Real-time Estimates")
-
 #this function will convert the character values (from xlsx format of numbers with commas) to numeric class values
 setClass("num.with.commas")
 setAs("character", "num.with.commas", 
@@ -49,7 +47,8 @@ nAlt <- length(kesFlow) - 1
 
 realFlow <- read.csv("realtimeKES.csv")
 realFlow$Date <- as.Date(realFlow$Date, "%m/%d/%Y")
-actualDate <- max(realFlow$Date)
+
+actualDate <- format(Sys.time(), '%d %B, %Y')
 
 ```
 
@@ -79,7 +78,7 @@ As of `r countDate`, the unexpanded redd count is **`r reddCount`** Winter-run r
 
 As of `r updatedReddInfoDate`, **`r nrow(subset(reddsAll, reddsAll$Status == "EMERGED")) `** Winter-run redds have **emerged** and **`r nrow(subset(reddsAll, reddsAll$Status == "DEWATERED"))`** have been **dewatered**. This leaves **`r nrow(subset(reddsAll, reddsAll$Status == "OK"))`** shallow water redds of concern.
 
-In addition, `r conservationFish` wild adult WRCS were removed to the hatchery as part of conservation actions.
+In addition, **`r conservationFish`** wild adult WRCS were removed to the hatchery as part of conservation actions.
 
 ```{r, echo = FALSE}
 # Estimated number of redds dewatered
@@ -181,7 +180,7 @@ for(r in 1:nrow(reddsTable)){
 }
 
 library(RColorBrewer)
-cols <- brewer.pal(nAlt,'Set2')
+cols <- brewer.pal(nAlt,'Set1')
 
 plot(reddsTable$Estimated.Date.of.Emergence, reddsTable$ACTUAL.or.ESTIMATED..DEWATER.FLOW, 
      pch = 16, col = reddsTable$cols,
@@ -205,7 +204,7 @@ text(reddsTable$Estimated.Date.of.Emergence + 0.01, reddsTable$ACTUAL.or.ESTIMAT
 for(a in 1:(nAlt)){
   lines(kesFlow$Date , kesFlow[ ,  paste0("A", substr(names(kesFlow)[a + 1], 4,5), "cfs")], col = cols[a], lwd = 2)
 }
-legend("bottom", inset = c(0, -0.3), legend=c(names(kesFlow)[2:length(kesFlow)], "Emerged", "Dewatered", "Remaining"),
+legend("bottom", inset = c(0, -0.3), legend=c(names(kesFlow)[2:(nAlt+1)], "Emerged", "Dewatered", "Remaining"),
        pch = c( rep(NA, nAlt), 16, 16, 16),
        col=c(cols[1:(nAlt)], "light blue", "darkorange2",  "grey"), 
        lty= c(rep(1, nAlt), NA, NA, NA), cex=0.8, xpd = TRUE, horiz = TRUE)  
@@ -226,5 +225,5 @@ legend("bottom", inset = c(0, -0.3), legend=c(names(kesFlow)[2:length(kesFlow)],
 
 ```
 
-**Figure 1.** Actual or estimated emergence dates of SRWC redds and actual or estimated dewatering flow for the September-October estimated redd emergence dates as compared to Keswick flow (in cfs) of proposed management alternatives. Points represent emerged, dewatered, or remaining redds. Numbers inside of points indicate how many redds share that estimated emergence date and actual/estimated dewatering flow. Points that fall above/to the right of a flow alternative line are expected to be dewatered given that management alternative is followed. Points that fall below/to the left of/on a flow alternative line are not expected to be dewatered, given that management alternative is followed.Black line represents the real Keswick Flow, as of the date indicated by the dashed line. 
+**Figure 1.** Actual or estimated emergence dates of SRWC redds and actual or estimated dewatering flow for the September-October estimated redd emergence dates as compared to Keswick flow (in cfs) of proposed management alternatives. Points represent emerged, dewatered, or remaining redds. Numbers inside of points indicate how many redds share that estimated emergence date and actual/estimated dewatering flow. Points that fall above/to the right of a flow alternative line are expected to be dewatered given that management alternative is followed. Points that fall below/to the left of/on a flow alternative line are not expected to be dewatered, given that management alternative is followed. Today's date indicated by the dashed line. 
 
