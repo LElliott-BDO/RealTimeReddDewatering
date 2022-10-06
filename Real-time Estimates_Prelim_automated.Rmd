@@ -11,8 +11,8 @@ This script constructs real-time winter-run redd dewatering estimates based on d
 
 ```{r, echo=FALSE}
 reddCount <- 1055 
-countDate <- "September 8, 2022"
-updatedReddInfoDate <- "September 12, 2022"
+countDate <- "September 12, 2022"
+updatedReddInfoDate <- "September 28, 2022"
 conservationFish <- 79
 #show_extra = TRUE
 ```
