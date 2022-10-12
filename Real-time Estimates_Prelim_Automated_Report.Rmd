@@ -3,8 +3,8 @@ title: "PRELIMINARY DATA: Real-time SRWC Redd Dewatering Estimates"
 author: "BDO Science Division"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 output:
-  word_document: default
   html_document: default
+  word_document: default
   pdf_document: default
 ---
 
@@ -23,6 +23,8 @@ Please note that all data are preliminary until data collection is finalized. Li
 
 
 ```{r setup, echo=FALSE}
+setwd("I:/Lisa/Redd Dewatering/Real-time Estimates")
+
 library(tinytex)
 library(data.table)
 library(plyr)
