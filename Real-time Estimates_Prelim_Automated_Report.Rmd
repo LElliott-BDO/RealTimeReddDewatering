@@ -10,7 +10,7 @@ output:
 
 ```{r, echo=FALSE}
 reddCount <- 1059 #check YYYY Winter-run data file.xls, Reporting page (currently cell B88) 
-countDate <- "September 12, 2022"
+countDate <- "September 28, 2022"
 updatedReddInfoDate <- "October 5, 2022"
 conservationFish <- 79
 #show_extra = TRUE
@@ -129,7 +129,8 @@ for(r in 1:nrow(redds)){ #loop over redds
 
 
 # Table
-**Table 1.** Average September Keswick (KES) Flow, monthly flows for September and October (in cfs), total Sept-Oct volume (in TAF), estimated numbers of SRWC redds dewatered, and percent of population that would be lost under each of the proposed alternatives. Redd dewatering is considered at the actual or estimated dewatering flow and with a 100 cfs buffer applied to the actual/estimated dewatering flow. Percentage of the population lost is based on the `r countDate` count of `r reddCount` Winter-run redds and updated redd counts may be available soon.  
+**Table 1.** Average September Keswick (KES) Flow, monthly flows for September and October (in cfs), total Sept-Oct volume (in TAF), estimated numbers of SRWC redds dewatered, and percent of population that would be lost under each of the proposed alternatives. Redd dewatering is considered at the actual or estimated dewatering flow and with a 100 cfs buffer applied to the actual/estimated dewatering flow.
+
 ```{r, echo=FALSE, results= TRUE}
 Metric <- c("Avg Sept Flow (cfs)", "Avg Oct Flow (cfs)", "Total Sept-Oct Flow (TAF)", "Redds dewatered", "Percent Lost", "Redds dewatered (w/ 100cfs buffer)", "Percent Lost (w/ 100cfs buffer)")
 table <- data.frame(Metric)
